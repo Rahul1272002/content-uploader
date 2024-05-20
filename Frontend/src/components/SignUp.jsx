@@ -1,7 +1,10 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { Link } from 'react-router-dom';
+
 const SignUp = () => {
+    const navigate = useNavigate();
     const [formData, setFormData] = useState({
         username: '',
         fullName: '',
@@ -38,8 +41,9 @@ const SignUp = () => {
             formDataToSend.append('coverImage', formData.coverImage);
 
             const response = await axios.post('http://localhost:8000/api/v1/users/register', formDataToSend);
-
+     
             console.log(response.data); 
+            navigate("/sign-in")
         } catch (error) {
             console.error('Error:', error);
         }

@@ -3,8 +3,20 @@ import { Link } from 'react-router-dom';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import Cookies from "universal-cookie"
+import { useDispatch } from 'react-redux';
 
+import {login} from "../store/userSlice"
 const SignIn = () => {
+
+    const handleSignOut = () => {
+ 
+        cookie.remove("accessToken");
+        cookie.remove("refreshToken");
+        dispatch(logout()); // Assuming you have a logout action in your userSlice
+        navigate("/sign-in"); // Redirect to sign in page
+    };
+    const dispatch = useDispatch();
+
     const cookie =new Cookies();
     const [formData, setFormData] = useState({
         email: '',
@@ -12,11 +24,14 @@ const SignIn = () => {
     });
 const navigate=useNavigate()
     const handleChange = (e) => {
+       e.preventDefault()
         const { name, value } = e.target;
         setFormData((prevData) => ({
+ 
             ...prevData,
             [name]: value,
         }));
+       
     };
 
     const handleSubmit = async (e) => {
@@ -26,6 +41,13 @@ const navigate=useNavigate()
             //console.log(response.data.data); 
              cookie.set("accessToken",response.data.data.accessToken)
             cookie.set("refreshToken",response.data.data.refreshToken)
+            const user = await axios.get(
+                "http://localhost:8000/api/v1/users/current-user",
+                {
+                  withCredentials: true,
+                }
+              );
+            dispatch(login(user.data.data));
             navigate("/")
         } catch (error) {
             console.error('Error:', error);

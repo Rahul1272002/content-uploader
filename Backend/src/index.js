@@ -10,5 +10,5 @@ connectDb().then(()=>{
         console.log(`server is running on ${process.env.PORT}`)
     })
 }).catch((err)=>{
-    console.log(err)
+    console.log("hello",err)
 })

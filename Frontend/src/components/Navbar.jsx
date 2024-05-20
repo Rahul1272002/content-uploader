@@ -1,16 +1,23 @@
 import React,{useState} from 'react'
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { Link } from 'react-router-dom';
+import { useDispatch } from 'react-redux';
+ import {logout} from "../store/userSlice"
+
 export default function Navbar({data}) {
+  const dispatch = useDispatch();
+  
 const navigate=useNavigate()
     const handleUser=()=>{
-            navigate(`/:${data.data._id}`)
+            navigate(`/${data.data._id}`)
     }
-  // console.log(data.data)
+
   const signOut=async()=>{
     try {
       
       await axios.post("http://localhost:8000/api/v1/users/logout",null,{ withCredentials: true })
+    dispatch(logout());
       navigate("/sign-in")
     } catch (error) {
       console.log("hello")
@@ -19,7 +26,9 @@ const navigate=useNavigate()
     return (
         <nav className="bg-gray-900 text-white p-2 ">
           <div className="container mx-auto flex items-center justify-between">
-            {/* Logo */}
+     <Link to="/">
+     
+     
             <div className="flex items-center">
               <svg
                 className="w-8 h-8 text-red-500 mr-2"
@@ -34,6 +43,7 @@ const navigate=useNavigate()
               </svg>
               <span className="text-xl font-bold">Uploader</span>
             </div>
+     </Link>
     
      
             <input

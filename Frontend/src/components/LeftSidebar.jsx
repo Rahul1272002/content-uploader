@@ -1,5 +1,5 @@
 import React from 'react';
-
+import { Link } from 'react-router-dom';
 const LeftSidebar = () => {
   return (
     <div className="bg-gray-800 text-white h-screen w-64 flex flex-col">
@@ -11,26 +11,29 @@ const LeftSidebar = () => {
       <div className="flex-grow">
         <ul className="py-4 space-y-5">
           <li className="px-4 py-2 text-sm hover:bg-gray-700 cursor-pointer border-4 border-red-600  " >
-            <a href="#" >Home</a>
+            <p  >Home</p>
           </li>
           <li className="px-4 py-2 text-sm hover:bg-gray-700 cursor-pointer border-4 border-red-600  ">
-            <a href="#">Liked Videos</a>
+            <p >Liked Videos</p>
+          </li>
+         <Link to="/watch-history">
+
+          <li className="px-4 py-2 text-sm hover:bg-gray-700 cursor-pointer border-4 border-red-600  ">
+            <p>Watch History</p>
+          </li>
+         </Link>
+          <li className="px-4 py-2 text-sm hover:bg-gray-700 cursor-pointer border-4 border-red-600  ">
+            <p >My Content</p>
           </li>
           <li className="px-4 py-2 text-sm hover:bg-gray-700 cursor-pointer border-4 border-red-600  ">
-            <a href="#">History</a>
+            <p >Collections</p>
           </li>
           <li className="px-4 py-2 text-sm hover:bg-gray-700 cursor-pointer border-4 border-red-600  ">
-            <a href="#">My Content</a>
-          </li>
-          <li className="px-4 py-2 text-sm hover:bg-gray-700 cursor-pointer border-4 border-red-600  ">
-            <a href="#">Collections</a>
-          </li>
-          <li className="px-4 py-2 text-sm hover:bg-gray-700 cursor-pointer border-4 border-red-600  ">
-            <a href="#">Subscribers</a>
+            <p >Subscribers</p>
           </li>
         </ul>
       </div>
-      {/* Footer or additional content */}
+
       <div className="p-4">
         <p className="text-sm">Your footer content</p>
       </div>

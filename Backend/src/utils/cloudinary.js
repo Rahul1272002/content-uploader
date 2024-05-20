@@ -37,7 +37,7 @@ const deleteCloudinary = async (public_id) => {
         });
     } catch (error) {
         return error;
-        console.log("delete on cloudinary failed", error);
+        //console.log("delete on cloudinary failed", error);
     }
 };
 export {uploadCloudinary,deleteCloudinary}

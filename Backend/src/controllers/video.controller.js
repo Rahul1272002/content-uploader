@@ -7,11 +7,21 @@ import {asyncHandler} from "../utils/asyncHandler.js"
 import {deleteCloudinary, uploadCloudinary} from "../utils/cloudinary.js"
 import { Like } from "../models/like.model.js"
 import {Comment} from "../models/comment.model.js"
+const getUserVideo=(async(req,res)=>{
+
+ const userId = req.params.id;
+
+ const video = await Video.find({owner:new mongoose.Types.ObjectId(userId)});
+
+    return res
+        .status(200)
+        .json(new ApiResponse(200,video, "Videos fetched successfully"));
+})
 
 const getAllVideos = asyncHandler(async (req, res) => {
     const { page = 1, limit = 10, query, sortBy, sortType,userId} = req.query;
 
-   
+ 
     const pipeline = [];
 
 
@@ -39,9 +49,9 @@ const getAllVideos = asyncHandler(async (req, res) => {
             }
         });
     }
-
+// console.log("hello ",pipeline)
     // fetch videos only that are set isPublished as true
-    pipeline.push({ $match: { isPublished: false } });
+    pipeline.push({ $match: { isPublished: true } });
 
     //sortBy can be views, createdAt, duration
     //sortType can be ascending(-1) or descending(1)
@@ -54,6 +64,7 @@ const getAllVideos = asyncHandler(async (req, res) => {
     } else {
         pipeline.push({ $sort: { createdAt: -1 } });
     }
+
 
     pipeline.push(
         {
@@ -76,16 +87,16 @@ const getAllVideos = asyncHandler(async (req, res) => {
             $unwind: "$ownerDetails"
         }
     )
-
+// console.log(pipeline)
     const videoAggregate = Video.aggregate(pipeline);
-
+// console.log(videoAggregate)
     const options = {
         page: parseInt(page, 10),
         limit: parseInt(limit, 10)
     };
 
     const video = await Video.aggregatePaginate(videoAggregate, options);
-
+// console.log(video)
     return res
         .status(200)
         .json(new ApiResponse(200, video, "Videos fetched successfully"));
@@ -162,7 +173,7 @@ const getVideoById = asyncHandler(async (req, res) => {
      },
      {
         $lookup:{
-            from:"like",
+            from:"likes",
             localField:"_id",
             foreignField:"video",
             as:"likes"
@@ -253,8 +264,8 @@ if (!video) {
 
 
 await Video.findByIdAndUpdate(videoId, {
-    $inc: {
-        views: 1
+    $addToSet: {
+        views: req.user?._id
     }
 });
 
@@ -433,5 +444,6 @@ export {
     getVideoById,
     updateVideo,
     deleteVideo,
-    togglePublishStatus
+    togglePublishStatus,
+    getUserVideo
 }

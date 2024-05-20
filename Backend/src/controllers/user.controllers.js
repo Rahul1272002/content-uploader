@@ -4,7 +4,7 @@ import { User } from "../models/User.model.js";
 import {uploadCloudinary} from "../utils/cloudinary.js"
 import { ApiResponse } from "../utils/ApiResponse.js";
 import mongoose from "mongoose";
-
+import jwt from "jsonwebtoken"
 const generateAccessAndRefereshTokens=async(userId)=>{
     try {
      
@@ -15,9 +15,8 @@ const generateAccessAndRefereshTokens=async(userId)=>{
         const refreshToken = user.generateRefreshToken()
         user.refreshToken = refreshToken
         await user.save({ validateBeforeSave: false })
-
+       
         return {accessToken, refreshToken}
-
 
     } catch (error) {
         throw new ApiError(500,"Somthing wrong cookies")
@@ -159,7 +158,7 @@ const logoutUser=asyncHandler(async(req,res)=>{
 })
 const getUserChannelProfile = asyncHandler(async(req, res) => {
     const {username} = req.params
-
+    console.log(username)
     if (!username?.trim()) {
         throw new ApiError(400, "username is missing")
     }
@@ -230,101 +229,100 @@ const getUserChannelProfile = asyncHandler(async(req, res) => {
 })
 
 const getWatchHistory=asyncHandler(async(req,res)=>{
-    const user=await User.aggregate([
-        {
-            $match:{
-                _id:new mongoose.Types.ObjectId(req.user._id)
-            }
-        },
-        {
-            $lookup:{
-                from:"videos",
-                to:"watchHistory",
-                foreignField:"_id",
-                as:"watchHistory",
-                pipeline:[
-                    {
-                        $lookup:{
-                            from:"users",
-                            localField:"owner",
-                            foreignField:"_id",
-                            as:"owner",
-                            pipeline:[
-                                {
-                                    $project:{
-                                        fullName:1,
-                                        username:1,
-                                        avatar:1,                                     
+    try {
+        console.log(req.user._id)
+        const user = await User.aggregate([
+            {
+                $match: {
+                    _id: new mongoose.Types.ObjectId(req.user._id)
+                }
+            },
+            {
+                $lookup: {
+                    from: "videos",
+                    localField: "watchHistory",
+                    foreignField: "_id",
+                    as: "watchHistory",
+                    pipeline: [
+                        {
+                            $lookup: {
+                                from: "users",
+                                localField: "owner",
+                                foreignField: "_id",
+                                as: "owner",
+                                pipeline: [
+                                    {
+                                        $project: {
+                                            username: 1,
+                                            fullName: 1,
+                                            avatar: 1
+                                        }
                                     }
+                                ]
+                            }
+                        },
+                        {
+                            $addFields: {
+                                owner: {
+                                    $first: "$owner"
                                 }
-                            ]
-                        }
-                    },
-                    {
-                        $addFields:{
-                            owner:{
-                                $first:"$owner"
                             }
                         }
-                    }
-                ]
+                    ]
+                }
             }
-        }
-    ])
-
-
-    return res
-            .status(200)
-            .json(
-                new ApiResponse(200,user[0].watchHistory,"watch history fetched successfully")
-            )
+        ]);
+    
+    
+        return res
+                .status(200)
+                .json(
+                    new ApiResponse(200,user[0].watchHistory,"watch history fetched successfully")
+                )
+    }catch (error) {
+        throw new ApiError(500,"Somthing wrong cookies")
+    }
+   
 })
 
 const refreshAccessToken=asyncHandler(async(req,res)=>{
-    const incomingRefreshToken = req.cookies.refreshToken || req.body.refreshToken
+ 
+  const incomingRefreshToken = req.cookies?.refreshToken || req.body.refreshToken;
 
     if (!incomingRefreshToken) {
-        throw new ApiError(401, "unauthorized request")
+        throw new ApiError(401, "unauthorized request");
+    }
+ console.log("incomming   ",incomingRefreshToken)
+    const user = await User.findOne({
+        refreshToken: incomingRefreshToken
+    });
+ console.log(user)
+    if (!user) {
+        throw new ApiError(401, "Invalid refresh token");
     }
 
-    try {
-        const decodedToken = jwt.verify(
-            incomingRefreshToken,
-            process.env.REFRESH_TOKEN_SECRET
-        )
-    
-        const user = await User.findById(decodedToken?._id)
-    
-        if (!user) {
-            throw new ApiError(401, "Invalid refresh token")
-        }
-    
-        if (incomingRefreshToken !== user?.refreshToken) {
-            throw new ApiError(401, "Refresh token is expired or used")
-            
-        }
-    
-        const options = {
-            httpOnly: true,
-            secure: true
-        }
-    
-        const {accessToken, newRefreshToken} = await generateAccessAndRefereshTokens(user._id)
-    
-        return res
+    const { accessToken , refreshToken } = await generateAccessAndRefereshTokens(user._id);
+
+    const options = {
+        httpOnly: true,
+        secure: true,
+        sameSite: "None"
+    };
+
+    return res
         .status(200)
         .cookie("accessToken", accessToken, options)
-        .cookie("refreshToken", newRefreshToken, options)
+        .cookie("refreshToken", refreshToken, options)
         .json(
             new ApiResponse(
-                200, 
-                {accessToken, refreshToken: newRefreshToken},
+                200,
+                {
+                    accessToken,
+                    refreshToken
+                },
                 "Access token refreshed"
             )
         )
-    } catch (error) {
-        throw new ApiError(401, error?.message || "Invalid refresh token")
-    }
 
 })
 const changeCurrentPassword = asyncHandler(async(req, res) => {
@@ -389,9 +387,8 @@ const updateUserAvatar = asyncHandler(async(req, res) => {
         throw new ApiError(400, "Avatar file is missing")
     }
 
-    //TODO: delete old image - assignment
 
-    const avatar = await uploadOnCloudinary(avatarLocalPath)
+    const avatar = await uploadCloudinary(avatarLocalPath)
 
     if (!avatar.url) {
         throw new ApiError(400, "Error while uploading on avatar")
@@ -425,7 +422,7 @@ const updateUserCoverImage = asyncHandler(async(req, res) => {
     //TODO: delete old image - assignment
 
 
-    const coverImage = await uploadOnCloudinary(coverImageLocalPath)
+    const coverImage = await uploadCloudinary(coverImageLocalPath)
 
     if (!coverImage.url) {
         throw new ApiError(400, "Error while uploading on avatar")
